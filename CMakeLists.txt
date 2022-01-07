@@ -22,8 +22,8 @@ add_subdirectory(${THIRD_PARTY_DIR}/cwalk)
 
 set(XLOG_DECODE_SRCS ${CMAKE_CURRENT_SOURCE_DIR}/src)
 add_executable(xlog_decode 
-${XLOG_DECODE_SRCS}/decode_log_file.c 
-${XLOG_DECODE_SRCS}/micro-ecc-master/uECC.c)
+    ${XLOG_DECODE_SRCS}/decode_log_file.c 
+    ${XLOG_DECODE_SRCS}/micro-ecc-master/uECC.c)
 
 target_link_libraries(xlog_decode
     libzstd_static
