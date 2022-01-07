@@ -53,3 +53,4 @@ dkms.conf
 
 # build out
 build_out/
+build_vscode/
