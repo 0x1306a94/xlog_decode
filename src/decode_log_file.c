@@ -606,7 +606,7 @@ int main(int argc, char *argv[]) {
         OPT_HELP(),
         OPT_GROUP("Basic options"),
         OPT_STRING('i', "in", &inPath, "待解密文件 可以是文件目录, 也可以是文件"),
-        OPT_STRING('o', "out", &outPath, "解密后输出目录"),
+        OPT_STRING('o', "out", &outPath, "如果输入是目录, 则输出也必须是目录, 如果输入是单个文件, 则可以是指定输出文件或者输出目录"),
         OPT_STRING('k', "key", &PRIV_KEY, "私钥"),
         //        OPT_STRING(NULL, "public", &PUB_KEY, "公钥"),
         OPT_END(),
@@ -634,25 +634,48 @@ int main(int argc, char *argv[]) {
 
     cwk_path_set_style(CWK_STYLE_UNIX);
 
-    if (access(outPath, F_OK) != 0) {
-        if (mkdir(outPath, (S_IRWXU | S_IRWXG | S_IRWXO)) != 0) {
-            printf("%s 目录创建失败 %d", outPath, errno);
-            return EXIT_FAILURE;
-        }
-    }
-
     struct stat in_path_stat;
-    struct stat out_path_stat;
     stat(inPath, &in_path_stat);
-    stat(outPath, &out_path_stat);
-    if (!S_ISDIR(out_path_stat.st_mode)) {
-        argparse_usage(&argparse);
-        return EXIT_FAILURE;
-    }
 
     if (S_ISREG(in_path_stat.st_mode)) {
+        if (strcmp(inPath, outPath) == 0) {
+            printf("error: 输出文件和输入文件一致\n");
+            return EXIT_FAILURE;
+        }
+        if (outPath != NULL) {
+            struct stat out_path_stat;
+            stat(outPath, &out_path_stat);
+            if (S_ISDIR(out_path_stat.st_mode)) {
+                char *basename = NULL;
+                size_t len = 0;
+                cwk_path_get_basename(inPath, (const char **)&basename, &len);
+                if (basename != NULL) {
+                    char fixOutPath[256] = {0};
+                    sprintf(fixOutPath, "%s%s.log", outPath, basename);
+                    outPath = fixOutPath;
+                }
+            }
+        }
         parseFile(inPath, outPath);
     } else if (S_ISDIR(in_path_stat.st_mode)) {
+        if (outPath != NULL) {
+            struct stat out_path_stat;
+            stat(outPath, &out_path_stat);
+
+            if (!S_ISDIR(out_path_stat.st_mode)) {
+                argparse_usage(&argparse);
+                return EXIT_FAILURE;
+            }
+
+            if (access(outPath, F_OK) != 0) {
+                if (mkdir(outPath, (S_IRWXU | S_IRWXG | S_IRWXO)) != 0) {
+                    printf("%s 目录创建失败 %d", outPath, errno);
+                    return EXIT_FAILURE;
+                }
+            }
+        } else {
+            outPath = inPath;
+        }
         parseDir(inPath, outPath);
     } else {
         argparse_usage(&argparse);
