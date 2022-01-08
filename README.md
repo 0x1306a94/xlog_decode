@@ -27,6 +27,6 @@ Usage: xlog_decode [options] [[--] args]
 
 Basic options
     -i, --in=<str>    待解密文件 可以是文件目录, 也可以是文件
-    -o, --out=<str>   解密后输出目录
+    -o, --out=<str>   如果输入是目录, 则输出也必须是目录, 如果输入是单个文件, 则可以是指定输出文件或者输出目录
     -k, --key=<str>   私钥
 ```
