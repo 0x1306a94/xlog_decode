@@ -564,8 +564,8 @@ void parseDir(const char *path, const char *outDir) {
     if ((dir = opendir(path)) != NULL) {
         while ((ent = readdir(dir)) != NULL) {
             if (strlen(ent->d_name) > 5 && strcmp(ent->d_name + strlen(ent->d_name) - 5, ".xlog") == 0) {
-                char inPath[1024] = {0};
-                char outPath[1024] = {0};
+                char inPath[256] = {0};
+                char outPath[256] = {0};
 
                 snprintf(inPath, sizeof(inPath), "%s/%s", path, ent->d_name);
 
@@ -651,8 +651,29 @@ int main(int argc, char *argv[]) {
                 cwk_path_get_basename(inPath, (const char **)&basename, &len);
                 if (basename != NULL) {
                     char fixOutPath[256] = {0};
-                    sprintf(fixOutPath, "%s%s.log", outPath, basename);
+                    const char *paths[3];
+                    paths[0] = outPath;
+                    paths[1] = basename;
+                    paths[2] = NULL;
+                    cwk_path_join_multiple(paths, fixOutPath, sizeof(fixOutPath));
                     outPath = fixOutPath;
+                    char *ext_buf = NULL;
+                    size_t ext_len = 0;
+                    cwk_path_get_extension(fixOutPath, (const char **)&ext_buf, &ext_len);
+                    if (ext_len > 0) {
+                        char changeExtBuf[256 + 5] = {0};
+                        size_t len = ext_len + 5;
+                        char *new_ext = (char *)alloca(len);
+                        if (new_ext == NULL) {
+                            printf("alloca error: %d\n", errno);
+                            return EXIT_FAILURE;
+                        }
+                        memset(new_ext, 0, len);
+                        strcpy(new_ext, ext_buf);
+                        strcpy(new_ext + ext_len, ".log");
+                        cwk_path_change_extension(fixOutPath, new_ext, changeExtBuf, sizeof(changeExtBuf));
+                        outPath = changeExtBuf;
+                    }
                 }
             }
         }
